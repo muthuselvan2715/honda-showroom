@@ -1,0 +1,271 @@
+{
+  "info": {
+    "name": "Honda Motorcycle Showroom Management System API",
+    "_postman_id": "honda-dealership-api-v1",
+    "description": "Comprehensive Postman collection for Honda Motorcycle Dealership ERP and POS System",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000/api/v1", "type": "string" },
+    { "key": "authToken", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "url": "http://localhost:5000/api/health"
+      }
+    },
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Admin Login",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@honda-dealership.com\",\n  \"password\": \"Admin@Honda2026!\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Staff Login",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"staff@honda-dealership.com\",\n  \"password\": \"Staff@Honda2026!\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Current User Profile",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/auth/me",
+            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }]
+          }
+        },
+        {
+          "name": "Register New Staff (Admin Only)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/users",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Suresh Babu\",\n  \"email\": \"suresh.b@honda-dealership.com\",\n  \"password\": \"Staff@2026!\",\n  \"role\": \"staff\",\n  \"phone\": \"+91 98450 99887\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "Get Dashboard Statistics",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/dashboard/stats",
+            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Motorcycle Models",
+      "item": [
+        {
+          "name": "List Bike Models",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/bike-models",
+            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }]
+          }
+        },
+        {
+          "name": "Create Bike Model (Admin Only)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/bike-models",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"modelName\": \"NX500\",\n  \"variant\": \"Standard\",\n  \"modelYear\": 2026,\n  \"category\": \"Adventure\",\n  \"colours\": [\"Grand Prix Red\", \"Matte Gunpowder Black Metallic\"],\n  \"engineCapacityCc\": 471,\n  \"basePrice\": 590000,\n  \"reorderThreshold\": 2,\n  \"description\": \"Twin-cylinder adventure tourer.\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bike Units (Chassis/VIN)",
+      "item": [
+        {
+          "name": "List Physical Units",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/bike-units?status=available",
+            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }]
+          }
+        },
+        {
+          "name": "Stock In New Unit",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/bike-units",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chassisNumber\": \"ME4JF501LK000789\",\n  \"engineNumber\": \"JF50E700789\",\n  \"model\": \"<model_id>\",\n  \"colour\": \"Pearl Siren Blue\",\n  \"variant\": \"Standard\",\n  \"purchaseCost\": 68000,\n  \"location\": \"Showroom Floor\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Customers",
+      "item": [
+        {
+          "name": "List Customers",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/customers",
+            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }]
+          }
+        },
+        {
+          "name": "Create Customer",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/customers",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Vinod Sharma\",\n  \"phone\": \"9876501234\",\n  \"email\": \"vinod@example.com\",\n  \"address\": \"#101, Palm Meadows, Whitefield\",\n  \"city\": \"Bengaluru\",\n  \"state\": \"Karnataka\",\n  \"pincode\": \"560066\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sales & Billing",
+      "item": [
+        {
+          "name": "List Sales Invoices",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/sales",
+            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }]
+          }
+        },
+        {
+          "name": "Create Sale Invoice",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/sales",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": \"<customer_id>\",\n  \"bikeUnitId\": \"<unit_id>\",\n  \"insuranceCharge\": 5200,\n  \"rtoRegistrationCharge\": 7800,\n  \"accessoriesList\": [\n    { \"name\": \"Chrome Guard\", \"price\": 2400 }\n  ],\n  \"discountAmount\": 1000,\n  \"advancePayment\": 25000,\n  \"paymentMethod\": \"upi\",\n  \"paymentReference\": \"UPI/HDFC/20261025\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Printable Invoice",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/sales/<sale_id>",
+            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "List Payments",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/payments",
+            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }]
+          }
+        },
+        {
+          "name": "Record Payment",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/payments",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"saleId\": \"<sale_id>\",\n  \"amount\": 15000,\n  \"paymentMethod\": \"upi\",\n  \"transactionReference\": \"UPI-TXN-4910284\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reports",
+      "item": [
+        {
+          "name": "Sales Report JSON",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/reports/sales",
+            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }]
+          }
+        },
+        {
+          "name": "Sales Report CSV Download",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/reports/sales?format=csv",
+            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }]
+          }
+        },
+        {
+          "name": "Inventory Report CSV Download",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/reports/inventory?format=csv",
+            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }]
+          }
+        },
+        {
+          "name": "Outstanding Balances Report CSV Download",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/reports/outstanding-balances?format=csv",
+            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }]
+          }
+        }
+      ]
+    }
+  ]
+}

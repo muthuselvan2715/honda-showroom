@@ -1,0 +1,16 @@
+{
+  "name": "honda-motorcycle-showroom-system",
+  "version": "1.0.0",
+  "description": "Production-style Honda Motorcycle Showroom Management System",
+  "scripts": {
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "seed": "npm --prefix backend run seed",
+    "test:backend": "npm --prefix backend run test",
+    "build:frontend": "npm --prefix frontend run build",
+    "build": "npm install --prefix backend && npm install --prefix frontend --include=dev && npm run build --prefix frontend",
+    "start": "npm start --prefix backend"
+  },
+  "author": "Honda Project",
+  "license": "ISC"
+}
