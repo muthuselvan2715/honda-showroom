@@ -73,34 +73,21 @@ export const getDashboardStats = async (req, res, next) => {
     });
 
     // 5. Model-Wise Sales Chart Data
-    const modelSalesData = await Sale.aggregate([
+    const modelSalesGroups = await Sale.aggregate([
       { $match: { saleStatus: 'confirmed' } },
-      {
-        $group: {
-          _id: '$bikeModel',
-          unitsSold: { $sum: 1 },
-          totalRevenue: { $sum: '$totalAmount' },
-        },
-      },
-      {
-        $lookup: {
-          from: 'bikemodels',
-          localField: '_id',
-          foreignField: '_id',
-          as: 'modelDetails',
-        },
-      },
-      { $unwind: '$modelDetails' },
-      {
-        $project: {
-          modelName: { $concat: ['$modelDetails.modelName', ' - ', '$modelDetails.variant'] },
-          unitsSold: 1,
-          totalRevenue: 1,
-        },
-      },
-      { $sort: { unitsSold: -1 } },
-      { $limit: 7 },
+      { $group: { _id: '$bikeModel', unitsSold: { $sum: 1 }, totalRevenue: { $sum: '$totalAmount' } } },
     ]);
+    const modelById = new Map(allModels.map((m) => [m._id.toString(), m]));
+    const modelSalesData = modelSalesGroups
+      .map((g) => {
+        const m = g._id ? modelById.get(g._id.toString()) : null;
+        return m
+          ? { _id: g._id, modelName: `${m.modelName} - ${m.variant}`, unitsSold: g.unitsSold, totalRevenue: g.totalRevenue }
+          : null;
+      })
+      .filter(Boolean)
+      .sort((x, y) => y.unitsSold - x.unitsSold)
+      .slice(0, 7);
 
     // 6. Sales Trend (Last 6 Months)
     const sixMonthsAgo = new Date();
@@ -108,25 +95,20 @@ export const getDashboardStats = async (req, res, next) => {
     sixMonthsAgo.setDate(1);
     sixMonthsAgo.setHours(0, 0, 0, 0);
 
-    const salesTrend = await Sale.aggregate([
-      {
-        $match: {
-          saleStatus: 'confirmed',
-          saleDate: { $gte: sixMonthsAgo },
-        },
-      },
-      {
-        $group: {
-          _id: {
-            year: { $year: '$saleDate' },
-            month: { $month: '$saleDate' },
-          },
-          salesCount: { $sum: 1 },
-          totalRevenue: { $sum: '$totalAmount' },
-        },
-      },
-      { $sort: { '_id.year': 1, '_id.month': 1 } },
-    ]);
+    const recentConfirmedSales = await Sale.find(
+      { saleStatus: 'confirmed', saleDate: { $gte: sixMonthsAgo } },
+      { saleDate: 1, totalAmount: 1 }
+    ).lean();
+    const trendMap = new Map();
+    recentConfirmedSales.forEach((sale) => {
+      const d = new Date(sale.saleDate);
+      const key = d.getFullYear() * 100 + d.getMonth() + 1;
+      const entry = trendMap.get(key) || { _id: { year: d.getFullYear(), month: d.getMonth() + 1 }, salesCount: 0, totalRevenue: 0 };
+      entry.salesCount += 1;
+      entry.totalRevenue += sale.totalAmount || 0;
+      trendMap.set(key, entry);
+    });
+    const salesTrend = [...trendMap.keys()].sort((x, y) => x - y).map((k) => trendMap.get(k));
 
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const formattedTrend = salesTrend.map((item) => ({

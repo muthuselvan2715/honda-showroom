@@ -133,17 +133,15 @@ export const Payments = () => {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Payment Collections</h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Log partial installments, advance booking receipts, and invoice settlements
-          </p>
+          <h1 className="text-2xl font-semibold text-slate-900">Payments</h1>
+          <p className="text-sm text-slate-500 mt-1">Advance and balance payments received.</p>
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
           className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-md shadow-red-600/20 transition-all self-start sm:self-auto"
         >
           <Plus className="w-4 h-4" />
-          <span>Record Customer Payment</span>
+          <span>Record Payment</span>
         </button>
       </div>
 
@@ -164,7 +162,7 @@ export const Payments = () => {
             <option value="cheque">Cheque</option>
           </select>
         </div>
-        <span className="text-xs text-slate-500 font-medium">{total} Total Transactions</span>
+        <span className="text-xs text-slate-500 font-medium">{total} payments</span>
       </div>
 
       {/* Payments Table */}
@@ -174,11 +172,11 @@ export const Payments = () => {
             <thead>
               <tr className="bg-slate-50 text-slate-500 font-bold uppercase tracking-wider border-b border-slate-100">
                 <th className="py-3 px-4">Date & Time</th>
-                <th className="py-3 px-4">Invoice Reference</th>
+                <th className="py-3 px-4">Invoice</th>
                 <th className="py-3 px-4">Customer</th>
                 <th className="py-3 px-4">Payment Method</th>
-                <th className="py-3 px-4">Transaction UTR / Ref</th>
-                <th className="py-3 px-4 text-right">Amount Collected</th>
+                <th className="py-3 px-4">Reference</th>
+                <th className="py-3 px-4 text-right">Amount</th>
                 <th className="py-3 px-4">Received By</th>
                 <th className="py-3 px-4 text-center">Status</th>
               </tr>
@@ -239,7 +237,7 @@ export const Payments = () => {
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title="Record Customer Payment Receipt"
+        title="Record Payment"
       >
         <form onSubmit={handleRecordPayment} className="space-y-4">
           <div>
@@ -363,7 +361,7 @@ export const Payments = () => {
               disabled={isSubmitting || !selectedSaleId}
               className="px-5 py-2 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-xl shadow disabled:opacity-50"
             >
-              {isSubmitting ? 'Recording...' : 'Confirm Receipt'}
+              {isSubmitting ? 'Recording...' : 'Save Payment'}
             </button>
           </div>
         </form>

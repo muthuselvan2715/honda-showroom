@@ -35,10 +35,8 @@ export const AuditLogs = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Security & Audit History</h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Immutable log of sensitive operations (sales creation, cancellations, payments, and settings updates)
-          </p>
+          <h1 className="text-2xl font-semibold text-slate-900">Activity Log</h1>
+          <p className="text-sm text-slate-500 mt-1">Every login, sale, payment and settings change – who did it and when.</p>
         </div>
       </div>
 

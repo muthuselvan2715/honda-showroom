@@ -112,23 +112,21 @@ export const Settings = () => {
   return (
     <div className="space-y-8 max-w-5xl">
       <div>
-        <h1 className="text-2xl font-black text-slate-900 tracking-tight">Showroom Settings & Staff</h1>
-        <p className="text-xs text-slate-500 mt-0.5">
-          Configure dealership credentials, tax rules, invoice numbering, and staff security permissions
-        </p>
+        <h1 className="text-2xl font-semibold text-slate-900">Settings</h1>
+        <p className="text-sm text-slate-500 mt-1">Showroom details, tax defaults and staff logins.</p>
       </div>
 
       {/* Showroom Configuration Form */}
       <form onSubmit={handleSaveSettings} className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-6">
         <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
           <Building2 className="w-5 h-5 text-red-600" />
-          <h2 className="text-base font-bold text-slate-900">Showroom Identity & Statutory Details</h2>
+          <h2 className="text-base font-bold text-slate-900">Showroom details</h2>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-              Dealership Entity Name *
+              Showroom name *
             </label>
             <input
               type="text"
@@ -254,7 +252,7 @@ export const Settings = () => {
             className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-md shadow-red-600/20 transition-all disabled:opacity-50"
           >
             <Save className="w-4 h-4" />
-            <span>{isSaving ? 'Saving Changes...' : 'Save Configuration'}</span>
+            <span>{isSaving ? 'Saving…' : 'Save Settings'}</span>
           </button>
         </div>
       </form>
@@ -264,14 +262,14 @@ export const Settings = () => {
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
           <div className="flex items-center gap-2">
             <Users className="w-5 h-5 text-red-600" />
-            <h2 className="text-base font-bold text-slate-900">Showroom User Accounts & Access</h2>
+            <h2 className="text-base font-bold text-slate-900">Staff logins</h2>
           </div>
           <button
             onClick={() => setIsUserModalOpen(true)}
             className="flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-white px-3 py-2 rounded-xl text-xs font-bold transition-all"
           >
             <Plus className="w-4 h-4" />
-            <span>Create Staff User</span>
+            <span>Add Staff</span>
           </button>
         </div>
 
@@ -338,7 +336,7 @@ export const Settings = () => {
       <Modal
         isOpen={isUserModalOpen}
         onClose={() => setIsUserModalOpen(false)}
-        title="Create New Showroom User"
+        title="Add Staff Login"
       >
         <form onSubmit={handleCreateUser} className="space-y-4">
           <div>

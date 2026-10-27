@@ -4,6 +4,7 @@ dotenv.config();
 import app from './app.js';
 import { connectDB } from './config/db.js';
 import { User } from './models/User.js';
+import { Sale } from './models/Sale.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { spawnSync } from 'child_process';
@@ -29,6 +30,30 @@ async function startServer() {
       }
     } catch (error) {
       console.error(`[Setup] Auto-seed check failed: ${error.message}`);
+    }
+
+    // One-time repair: early demo invoices were saved without their accessory item list
+    try {
+      const demoAccessories = {
+        'HND-2026-1001': [
+          { name: 'All-Round Chrome Guard', price: 2400 },
+          { name: 'Seat Cover & Floor Mat', price: 950 },
+        ],
+        'HND-2026-1002': [
+          { name: 'Engine Crash Guard with Sliders', price: 4200 },
+          { name: 'Pillion Backrest', price: 2800 },
+        ],
+      };
+      for (const [invoiceNumber, items] of Object.entries(demoAccessories)) {
+        const itemsTotal = items.reduce((sum, item) => sum + item.price, 0);
+        const result = await Sale.updateOne(
+          { invoiceNumber, accessoriesTotal: itemsTotal, 'accessoriesList.0': { $exists: false } },
+          { $set: { accessoriesList: items } }
+        );
+        if (result.modifiedCount) console.log(`[Setup] Restored accessory lines on ${invoiceNumber}.`);
+      }
+    } catch (error) {
+      console.error(`[Setup] Demo invoice repair skipped: ${error.message}`);
     }
   }
 

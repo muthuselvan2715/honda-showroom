@@ -195,10 +195,8 @@ export const Inventory = () => {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Motorcycle Inventory</h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Physical chassis & VIN unit tracking derived directly from database records
-          </p>
+          <h1 className="text-2xl font-semibold text-slate-900">Inventory</h1>
+          <p className="text-sm text-slate-500 mt-1">Bike models and every bike in stock.</p>
         </div>
         <div className="flex items-center gap-2">
           {activeTab === 'units' ? (
@@ -207,7 +205,7 @@ export const Inventory = () => {
               className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-md shadow-red-600/20 transition-all"
             >
               <Plus className="w-4 h-4" />
-              <span>Stock In New Bike Unit</span>
+              <span>Add Bike to Stock</span>
             </button>
           ) : (
             isAdmin && (
@@ -248,7 +246,7 @@ export const Inventory = () => {
           }`}
         >
           <Layers className="w-4 h-4" />
-          <span>Physical Bike Units ({unitsTotal})</span>
+          <span>Bikes in Stock ({unitsTotal})</span>
         </button>
         <button
           onClick={() => setActiveTab('models')}
@@ -259,7 +257,7 @@ export const Inventory = () => {
           }`}
         >
           <Bike className="w-4 h-4" />
-          <span>Model Catalog ({models.length})</span>
+          <span>Models ({models.length})</span>
         </button>
       </div>
 
@@ -529,7 +527,7 @@ export const Inventory = () => {
       <Modal
         isOpen={isUnitModalOpen}
         onClose={() => setIsUnitModalOpen(false)}
-        title="Stock-In Physical Motorcycle Unit"
+        title="Add Bike to Stock"
       >
         <form onSubmit={handleUnitSubmit} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -564,7 +562,7 @@ export const Inventory = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                Bike Model Catalog *
+                Bike Model *
               </label>
               <select
                 required
@@ -657,7 +655,7 @@ export const Inventory = () => {
               type="submit"
               className="px-5 py-2 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 rounded-xl shadow"
             >
-              Confirm Unit Stock-In
+              Add to Stock
             </button>
           </div>
         </form>
@@ -667,7 +665,7 @@ export const Inventory = () => {
       <Modal
         isOpen={isModelModalOpen}
         onClose={() => setIsModelModalOpen(false)}
-        title={editingModel ? 'Update Model Specifications' : 'Catalog New Motorcycle Model'}
+        title={editingModel ? 'Update Model Specifications' : 'Add Bike Model'}
       >
         <form onSubmit={handleModelSubmit} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -814,7 +812,7 @@ export const Inventory = () => {
               type="submit"
               className="px-5 py-2 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 rounded-xl shadow"
             >
-              Save Bike Model
+              Save Model
             </button>
           </div>
         </form>
@@ -825,7 +823,7 @@ export const Inventory = () => {
         isOpen={Boolean(unitToDelete)}
         onClose={() => setUnitToDelete(null)}
         onConfirm={confirmDeleteUnit}
-        title="Remove Bike Unit from Inventory"
+        title="Remove Bike from Stock"
         message={`Are you sure you want to delete physical bike unit with Chassis/VIN '${unitToDelete?.chassisNumber}'? This action cannot be reversed.`}
         confirmText="Delete Unit"
         isLoading={isDeletingUnit}

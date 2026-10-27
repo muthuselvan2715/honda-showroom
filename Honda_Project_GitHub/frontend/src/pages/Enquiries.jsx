@@ -101,17 +101,15 @@ export const Enquiries = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Enquiries & Lead Management</h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Track customer interest, follow-ups, and sales conversions
-          </p>
+          <h1 className="text-2xl font-semibold text-slate-900">Enquiries</h1>
+          <p className="text-sm text-slate-500 mt-1">Customers interested in a bike, and when to follow up.</p>
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
           className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-md shadow-red-600/20 transition-all self-start sm:self-auto"
         >
           <Plus className="w-4 h-4" />
-          <span>Log New Enquiry</span>
+          <span>New Enquiry</span>
         </button>
       </div>
 
@@ -203,7 +201,7 @@ export const Enquiries = () => {
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title="Log Customer Vehicle Enquiry"
+        title="New Enquiry"
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -300,7 +298,7 @@ export const Enquiries = () => {
               type="submit"
               className="px-5 py-2 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 rounded-xl shadow"
             >
-              Submit Enquiry
+              Save Enquiry
             </button>
           </div>
         </form>

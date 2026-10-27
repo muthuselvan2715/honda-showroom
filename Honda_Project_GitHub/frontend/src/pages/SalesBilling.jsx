@@ -50,10 +50,8 @@ export const SalesBilling = () => {
   const [insuranceCharge, setInsuranceCharge] = useState(5500);
   const [rtoCharge, setRtoCharge] = useState(8500);
   const [discountAmount, setDiscountAmount] = useState(0);
-  const [accessoriesList, setAccessoriesList] = useState([
-    { name: 'Chrome Side Guard', price: 2200 },
-    { name: 'Floor Mat & Seat Cover', price: 950 },
-  ]);
+  // Start with no accessories – staff add only what the customer actually buys
+  const [accessoriesList, setAccessoriesList] = useState([]);
   const [newAccessoryName, setNewAccessoryName] = useState('');
   const [newAccessoryPrice, setNewAccessoryPrice] = useState('');
 
@@ -78,8 +76,15 @@ export const SalesBilling = () => {
         setAvailableUnits(unitRes.data.units || []);
         if (setRes.data.settings) {
           setShowroomSettings(setRes.data.settings);
-          setInsuranceCharge(setRes.data.settings.defaultInsuranceRate || 5500);
-          setRtoCharge(setRes.data.settings.defaultRtoCharge || 8500);
+          const st = setRes.data.settings;
+          setInsuranceCharge(st.defaultInsuranceRate ?? 5500);
+          setRtoCharge(st.defaultRtoCharge ?? 8500);
+          // Quick-register customers default to the showroom's own city and state
+          setNewCustomerData((prev) => ({
+            ...prev,
+            city: st.city || prev.city,
+            state: st.state || prev.state,
+          }));
         }
       } catch (err) {
         showError('Failed to load initial billing form data.');
@@ -184,10 +189,8 @@ export const SalesBilling = () => {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-black text-slate-900 tracking-tight">Generate Sale & Tax Invoice</h1>
-        <p className="text-xs text-slate-500 mt-0.5">
-          Atomic inventory reservation, GST tax computation, and booking payment entry
-        </p>
+        <h1 className="text-2xl font-semibold text-slate-900">New Sale</h1>
+        <p className="text-sm text-slate-500 mt-1">Choose the customer and the bike. Tax and total are worked out for you.</p>
       </div>
 
       <form onSubmit={handleSubmitSale} className="space-y-6">
@@ -199,7 +202,7 @@ export const SalesBilling = () => {
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div className="flex items-center gap-2">
                   <User className="w-4 h-4 text-red-600" />
-                  <h3 className="text-sm font-bold text-slate-900">1. Customer Identification</h3>
+                  <h3 className="text-sm font-bold text-slate-900">1. Customer</h3>
                 </div>
                 <div className="flex bg-slate-100 p-1 rounded-xl text-xs font-semibold">
                   <button
@@ -209,7 +212,7 @@ export const SalesBilling = () => {
                       customerMode === 'existing' ? 'bg-white shadow-xs text-slate-900 font-bold' : 'text-slate-500'
                     }`}
                   >
-                    Existing Customer
+                    Existing customer
                   </button>
                   <button
                     type="button"
@@ -218,7 +221,7 @@ export const SalesBilling = () => {
                       customerMode === 'new' ? 'bg-white shadow-xs text-slate-900 font-bold' : 'text-slate-500'
                     }`}
                   >
-                    Quick Register New
+                    New customer
                   </button>
                 </div>
               </div>
@@ -226,7 +229,7 @@ export const SalesBilling = () => {
               {customerMode === 'existing' ? (
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                    Select Customer Record *
+                    Customer *
                   </label>
                   <select
                     required={customerMode === 'existing'}
@@ -234,7 +237,7 @@ export const SalesBilling = () => {
                     onChange={(e) => setSelectedCustomerId(e.target.value)}
                     className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-red-600 font-medium"
                   >
-                    <option value="">Choose registered customer</option>
+                    <option value="">Select a customer</option>
                     {customers.map((c) => (
                       <option key={c._id} value={c._id}>
                         {c.name} — {c.phone} ({c.city})
@@ -286,12 +289,12 @@ export const SalesBilling = () => {
             <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
               <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
                 <Bike className="w-4 h-4 text-red-600" />
-                <h3 className="text-sm font-bold text-slate-900">2. Select Physical Motorcycle (VIN / Chassis)</h3>
+                <h3 className="text-sm font-bold text-slate-900">2. Bike</h3>
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                  Select Available Unit in Stock *
+                  Bike in stock (chassis number) *
                 </label>
                 <select
                   required
@@ -299,7 +302,7 @@ export const SalesBilling = () => {
                   onChange={(e) => handleUnitChange(e.target.value)}
                   className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-red-600 font-mono font-medium"
                 >
-                  <option value="">Choose an available physical bike unit</option>
+                  <option value="">Select a bike</option>
                   {availableUnits.map((u) => (
                     <option key={u._id} value={u._id}>
                       VIN: {u.chassisNumber} • {u.model?.modelName} ({u.variant}) • {u.colour} • Base: ₹{u.model?.basePrice}
@@ -337,7 +340,7 @@ export const SalesBilling = () => {
             {/* 3. Dealership Accessories & Charges */}
             <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <h3 className="text-sm font-bold text-slate-900">3. Accessories & Value Added Services</h3>
+                <h3 className="text-sm font-bold text-slate-900">3. Accessories & charges</h3>
                 <span className="text-xs font-mono font-semibold text-slate-600">
                   Total: {formatINR(accessoriesTotal)}
                 </span>
@@ -438,7 +441,7 @@ export const SalesBilling = () => {
             {/* Real-Time Tax Computation Summary */}
             <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
               <h3 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-2">
-                Tax Invoice Calculation
+                Bill summary
               </h3>
 
               <div className="space-y-2 text-xs">
@@ -495,7 +498,7 @@ export const SalesBilling = () => {
               {/* Advance Payment Entry */}
               <div className="pt-4 border-t border-slate-100 space-y-3">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                  Initial Payment at Booking
+                  Payment now
                 </h4>
 
                 <div>
@@ -516,7 +519,7 @@ export const SalesBilling = () => {
                       onClick={() => setAdvancePayment(totalInvoiceAmount)}
                       className="text-red-600 hover:underline font-semibold"
                     >
-                      Full Settle (₹{totalInvoiceAmount})
+                      Pay full amount (₹{totalInvoiceAmount})
                     </button>
                     <span>Remaining: {formatINR(outstandingBalance)}</span>
                   </div>
@@ -539,7 +542,7 @@ export const SalesBilling = () => {
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-600 mb-1">
-                    Reference / Transaction UTR
+                    Reference / UTR number
                   </label>
                   <input
                     type="text"
@@ -565,7 +568,7 @@ export const SalesBilling = () => {
                 ) : (
                   <>
                     <Receipt className="w-4 h-4" />
-                    <span>Confirm Sale & Generate Invoice</span>
+                    <span>Confirm Sale & Create Invoice</span>
                   </>
                 )}
               </button>

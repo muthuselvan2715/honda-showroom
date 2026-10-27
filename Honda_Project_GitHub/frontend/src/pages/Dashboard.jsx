@@ -1,34 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  Bike,
-  CheckCircle2,
-  Clock,
-  DollarSign,
-  TrendingUp,
-  AlertTriangle,
-  Receipt,
-  PlusCircle,
-  ArrowRight,
-  ShieldAlert,
-  Wallet,
-  Activity,
-} from 'lucide-react';
-import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-  AreaChart,
-  Area,
-} from 'recharts';
+import { Bike, Wallet, Receipt, Clock, PlusCircle, ArrowRight, AlertCircle } from 'lucide-react';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Cell } from 'recharts';
 import api from '../services/api';
 import { StatCard } from '../components/StatCard';
 import { Badge } from '../components/Badge';
-import { formatINR, formatDate } from '../utils/formatters';
+import { formatINR } from '../utils/formatters';
+
+const Card = ({ title, action, children, className = '' }) => (
+  <div className={`bg-white rounded-xl border border-slate-200 ${className}`}>
+    <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+      <h2 className="text-sm font-semibold text-slate-900">{title}</h2>
+      {action}
+    </div>
+    {children}
+  </div>
+);
 
 export const Dashboard = () => {
   const [data, setData] = useState(null);
@@ -42,7 +29,7 @@ export const Dashboard = () => {
       const res = await api.get('/dashboard/stats');
       setData(res.data);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load dealership dashboard statistics.');
+      setError(err.response?.data?.message || 'Could not load the dashboard.');
     } finally {
       setIsLoading(false);
     }
@@ -55,313 +42,238 @@ export const Dashboard = () => {
   if (isLoading) {
     return (
       <div className="space-y-6 animate-pulse">
-        <div className="h-10 bg-slate-200 rounded-xl w-64"></div>
+        <div className="h-9 bg-slate-200 rounded-lg w-48"></div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((n) => (
-            <div key={n} className="h-32 bg-slate-200 rounded-2xl"></div>
+            <div key={n} className="h-28 bg-slate-200 rounded-xl"></div>
           ))}
         </div>
-        <div className="h-80 bg-slate-200 rounded-2xl"></div>
+        <div className="h-72 bg-slate-200 rounded-xl"></div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="p-6 bg-red-50 border border-red-200 rounded-2xl text-center">
-        <ShieldAlert className="w-10 h-10 text-red-600 mx-auto mb-2" />
-        <h3 className="text-lg font-bold text-red-900">Database Connection Required</h3>
-        <p className="text-sm text-red-700 mt-1 max-w-md mx-auto">{error}</p>
+      <div className="bg-white border border-slate-200 rounded-xl p-8 text-center max-w-lg mx-auto">
+        <AlertCircle className="w-8 h-8 text-red-600 mx-auto mb-3" />
+        <h2 className="text-base font-semibold text-slate-900">Dashboard could not load</h2>
+        <p className="text-sm text-slate-500 mt-1">{error}</p>
         <button
           onClick={fetchDashboardData}
-          className="mt-4 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-semibold"
+          className="mt-5 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium"
         >
-          Retry Connection
+          Try again
         </button>
       </div>
     );
   }
 
-  const { metrics, lowStockAlerts = [], modelWiseSales = [], salesTrend = [], recentInvoices = [], recentActivities = [] } = data || {};
+  const { metrics, lowStockAlerts = [], modelWiseSales = [], salesTrend = [], recentInvoices = [] } = data || {};
+  const lastTrendIndex = salesTrend.length - 1;
 
   return (
-    <div className="space-y-8">
-      {/* Top Welcome & Quick Actions Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Dealership Overview</h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Real-time physical inventory, billing metrics, and revenue analytics
-          </p>
+          <h1 className="text-2xl font-semibold text-slate-900">Dashboard</h1>
+          <p className="text-sm text-slate-500 mt-1">Stock, sales and money to collect at a glance.</p>
         </div>
-        <div className="flex items-center gap-3">
-          <Link
-            to="/sales/new"
-            className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-md shadow-red-600/20 transition-all"
-          >
-            <PlusCircle className="w-4 h-4" />
-            <span>Create New Sale</span>
-          </Link>
+        <div className="flex items-center gap-2">
           <Link
             to="/inventory"
-            className="flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm"
+            className="flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 px-4 py-2 rounded-lg text-sm font-medium"
           >
-            <Bike className="w-4 h-4 text-slate-500" />
-            <span>Manage Inventory</span>
+            <Bike className="w-4 h-4" />
+            <span>Inventory</span>
+          </Link>
+          <Link
+            to="/sales/new"
+            className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium"
+          >
+            <PlusCircle className="w-4 h-4" />
+            <span>New Sale</span>
           </Link>
         </div>
       </div>
 
-      {/* Primary KPI Metrics Grid */}
+      {/* Key numbers */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          title="Physical Inventory"
-          value={metrics?.inventory?.totalPhysicalUnits || 0}
-          subtitle={`${metrics?.inventory?.available || 0} Available • ${metrics?.inventory?.reserved || 0} Reserved`}
+          title="Bikes in stock"
+          value={metrics?.inventory?.available || 0}
+          subtitle={`${metrics?.inventory?.reserved || 0} reserved · ${metrics?.inventory?.sold || 0} sold`}
           icon={Bike}
-          color="red"
+          color="slate"
         />
         <StatCard
-          title="Revenue Collected"
+          title="Sales this month"
+          value={metrics?.sales?.monthlyCompletedSales || 0}
+          subtitle={`${metrics?.sales?.todayCompletedSales || 0} today`}
+          icon={Receipt}
+          color="slate"
+        />
+        <StatCard
+          title="Money collected"
           value={formatINR(metrics?.sales?.revenueCollected || 0)}
-          subtitle="Sum of completed payments"
-          icon={DollarSign}
+          subtitle={`of ${formatINR(metrics?.sales?.totalInvoiceValue || 0)} billed`}
+          icon={Wallet}
           color="emerald"
         />
         <StatCard
-          title="Total Invoiced Value"
-          value={formatINR(metrics?.sales?.totalInvoiceValue || 0)}
-          subtitle={`${metrics?.sales?.monthlyCompletedSales || 0} Sales this month`}
-          icon={Receipt}
-          color="blue"
-        />
-        <StatCard
-          title="Customer Receivables"
+          title="To collect"
           value={formatINR(metrics?.sales?.outstandingCustomerBalances || 0)}
-          subtitle="Outstanding customer balances"
-          icon={Wallet}
+          subtitle="Pending customer balances"
+          icon={Clock}
           color="amber"
         />
       </div>
 
-      {/* Low Stock Warning Banner if any model is below reorder threshold */}
-      {lowStockAlerts.length > 0 && (
-        <div className="bg-amber-50/80 border border-amber-200 rounded-2xl p-4 sm:p-5">
-          <div className="flex items-center gap-2 text-amber-900 font-bold text-sm mb-3">
-            <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0" />
-            <span>Low Stock Reorder Alerts ({lowStockAlerts.length} Models)</span>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {lowStockAlerts.map((alert) => (
-              <div
-                key={alert.modelId}
-                className="bg-white p-3 rounded-xl border border-amber-200/80 shadow-xs flex items-center justify-between"
-              >
-                <div>
-                  <p className="text-xs font-bold text-slate-900">
-                    {alert.modelName} <span className="text-slate-500 font-normal">({alert.variant})</span>
-                  </p>
-                  <p className="text-[11px] text-slate-500">
-                    Category: <span className="font-medium text-slate-700">{alert.category}</span>
-                  </p>
-                </div>
-                <div className="text-right">
-                  <span className="text-xs font-extrabold text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded-md">
-                    {alert.available} in stock
-                  </span>
-                  <span className="text-[10px] text-slate-400 block mt-0.5">
-                    Min: {alert.reorderThreshold}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Analytics Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Sales Trend Chart */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-sm font-bold text-slate-900">Monthly Sales Revenue Trend</h3>
-              <p className="text-xs text-slate-500">Gross invoiced volume over recent months</p>
-            </div>
-            <TrendingUp className="w-4 h-4 text-emerald-600" />
-          </div>
-          <div className="h-64 w-full">
-            {salesTrend.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={salesTrend}>
-                  <defs>
-                    <linearGradient id="salesGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#dc2626" stopOpacity={0.25} />
-                      <stop offset="95%" stopColor="#dc2626" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                  <XAxis dataKey="period" stroke="#94a3b8" fontSize={11} tickLine={false} />
-                  <YAxis
-                    stroke="#94a3b8"
-                    fontSize={11}
-                    tickLine={false}
-                    tickFormatter={(val) => `₹${val / 1000}k`}
-                  />
-                  <Tooltip
-                    formatter={(val) => [formatINR(val), 'Revenue']}
-                    contentStyle={{ backgroundColor: '#1e293b', color: '#fff', borderRadius: '12px' }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="revenue"
-                    stroke="#dc2626"
-                    strokeWidth={2.5}
-                    fillOpacity={1}
-                    fill="url(#salesGrad)"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="h-full flex items-center justify-center text-xs text-slate-400">
-                No monthly sales history recorded yet.
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Model-Wise Sales Chart */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-sm font-bold text-slate-900">Model-Wise Units Sold</h3>
-              <p className="text-xs text-slate-500">Top demanded motorcycle models</p>
-            </div>
-            <Bike className="w-4 h-4 text-slate-500" />
-          </div>
-          <div className="h-64 w-full">
-            {modelWiseSales.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={modelWiseSales} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
-                  <XAxis type="number" stroke="#94a3b8" fontSize={11} tickLine={false} />
-                  <YAxis
-                    type="category"
-                    dataKey="modelName"
-                    stroke="#94a3b8"
-                    fontSize={10}
-                    width={110}
-                    tickLine={false}
-                  />
-                  <Tooltip
-                    formatter={(val) => [`${val} units`, 'Units Sold']}
-                    contentStyle={{ backgroundColor: '#1e293b', color: '#fff', borderRadius: '12px' }}
-                  />
-                  <Bar dataKey="unitsSold" fill="#3b82f6" radius={[0, 6, 6, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="h-full flex items-center justify-center text-xs text-slate-400">
-                No model-wise sales records to display.
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Lower Section: Recent Invoices & Stock Activity Log */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Invoices Table (2 cols) */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-          <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-bold text-slate-900">Recent Customer Invoices</h3>
-              <p className="text-xs text-slate-500">Latest sales created in the system</p>
-            </div>
-            <Link
-              to="/sales"
-              className="text-xs font-semibold text-red-600 hover:text-red-700 flex items-center gap-1"
-            >
-              <span>View All</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+        {/* Recent invoices */}
+        <Card
+          title="Recent invoices"
+          className="lg:col-span-2 overflow-hidden"
+          action={
+            <Link to="/sales" className="text-sm text-red-700 hover:text-red-800 flex items-center gap-1">
+              View all <ArrowRight className="w-3.5 h-3.5" />
             </Link>
-          </div>
+          }
+        >
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
+            <table className="w-full text-left text-sm">
               <thead>
-                <tr className="bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider border-b border-slate-100">
-                  <th className="py-3 px-4">Invoice No</th>
-                  <th className="py-3 px-4">Customer</th>
-                  <th className="py-3 px-4">Model</th>
-                  <th className="py-3 px-4 text-right">Total Amount</th>
-                  <th className="py-3 px-4 text-right">Balance</th>
-                  <th className="py-3 px-4 text-center">Payment</th>
+                <tr className="text-slate-500 border-b border-slate-100">
+                  <th className="py-2.5 px-5 font-medium">Invoice</th>
+                  <th className="py-2.5 px-5 font-medium">Customer</th>
+                  <th className="py-2.5 px-5 font-medium">Bike</th>
+                  <th className="py-2.5 px-5 font-medium text-right">Total</th>
+                  <th className="py-2.5 px-5 font-medium text-right">Balance</th>
+                  <th className="py-2.5 px-5 font-medium">Payment</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700">
                 {recentInvoices.length > 0 ? (
                   recentInvoices.map((inv) => (
-                    <tr key={inv._id} className="hover:bg-slate-50/70 transition-colors">
-                      <td className="py-3 px-4 font-mono font-bold text-slate-900">
-                        {inv.invoiceNumber}
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className="font-semibold text-slate-800 block">{inv.customer?.name}</span>
-                        <span className="text-[11px] text-slate-400">{inv.customer?.phone}</span>
-                      </td>
-                      <td className="py-3 px-4">
+                    <tr key={inv._id}>
+                      <td className="py-3 px-5 font-medium text-slate-900 whitespace-nowrap">{inv.invoiceNumber}</td>
+                      <td className="py-3 px-5">{inv.customer?.name}</td>
+                      <td className="py-3 px-5 text-slate-600">
                         {inv.bikeModel?.modelName} {inv.bikeModel?.variant}
                       </td>
-                      <td className="py-3 px-4 text-right font-mono font-semibold text-slate-900">
-                        {formatINR(inv.totalAmount)}
-                      </td>
-                      <td className="py-3 px-4 text-right font-mono text-slate-600">
+                      <td className="py-3 px-5 text-right tabular-nums">{formatINR(inv.totalAmount)}</td>
+                      <td className="py-3 px-5 text-right tabular-nums text-slate-600">
                         {formatINR(inv.outstandingBalance)}
                       </td>
-                      <td className="py-3 px-4 text-center">
-                        <Badge status={inv.paymentStatus} />
+                      <td className="py-3 px-5">
+                        {inv.saleStatus === 'cancelled' ? <Badge status="cancelled" /> : <Badge status={inv.paymentStatus} />}
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="6" className="py-8 text-center text-slate-400">
-                      No invoices recorded yet.
+                    <td colSpan="6" className="py-10 text-center text-slate-400">
+                      No invoices yet. Create the first sale.
                     </td>
                   </tr>
                 )}
               </tbody>
             </table>
           </div>
-        </div>
+        </Card>
 
-        {/* Audit Activity Feed (1 col) */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 flex flex-col">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
-            <h3 className="text-sm font-bold text-slate-900">Recent Showroom Logs</h3>
-            <Activity className="w-4 h-4 text-slate-400" />
-          </div>
-          <div className="space-y-3.5 overflow-y-auto max-h-[340px] pr-1">
-            {recentActivities.length > 0 ? (
-              recentActivities.map((act) => (
-                <div key={act._id} className="text-xs border-b border-slate-50 pb-2.5 last:border-0">
-                  <div className="flex items-center justify-between mb-0.5">
-                    <span className="font-bold text-slate-800 uppercase tracking-wider text-[10px]">
-                      {act.action?.replace(/_/g, ' ')}
-                    </span>
-                    <span className="text-[10px] text-slate-400">{formatDate(act.createdAt)}</span>
-                  </div>
-                  <p className="text-slate-600 line-clamp-2 leading-relaxed">{act.details}</p>
-                  <span className="text-[10px] text-slate-400 mt-0.5 block">
-                    By: {act.userName}
+        {/* Low stock */}
+        <Card
+          title="Low stock"
+          action={
+            lowStockAlerts.length > 0 ? (
+              <span className="text-xs text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
+                {lowStockAlerts.length} models
+              </span>
+            ) : null
+          }
+        >
+          {lowStockAlerts.length > 0 ? (
+            <ul className="divide-y divide-slate-100 max-h-[300px] overflow-y-auto">
+              {lowStockAlerts.map((alert) => (
+                <li key={alert.modelId} className="flex items-center justify-between px-5 py-2.5 text-sm">
+                  <span className="text-slate-800">
+                    {alert.modelName} <span className="text-slate-500">{alert.variant}</span>
                   </span>
-                </div>
-              ))
+                  <span className="text-slate-600 tabular-nums whitespace-nowrap">
+                    <span className={alert.available === 0 ? 'text-red-700 font-semibold' : 'font-semibold text-slate-900'}>
+                      {alert.available}
+                    </span>{' '}
+                    left
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="px-5 py-10 text-sm text-slate-400 text-center">All models are well stocked.</p>
+          )}
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Sales by month */}
+        <Card title="Sales by month" className="lg:col-span-2">
+          <div className="h-64 px-3 py-4">
+            {salesTrend.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={salesTrend} margin={{ top: 8, right: 12, left: 4, bottom: 0 }}>
+                  <CartesianGrid stroke="#efeff1" vertical={false} />
+                  <XAxis dataKey="period" stroke="#9c9ea5" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis
+                    stroke="#9c9ea5"
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
+                    width={56}
+                    tickFormatter={(val) => (val === 0 ? "₹0" : val >= 100000 ? `₹${(val / 100000).toFixed(1)}L` : `₹${Math.round(val / 1000)}k`)}
+                  />
+                  <Tooltip
+                    cursor={{ fill: '#f7f7f8' }}
+                    formatter={(val, name, item) => [`${formatINR(val)} · ${item.payload.sales} sales`, 'Billed']}
+                    contentStyle={{ borderRadius: '8px', border: '1px solid #e4e4e7', fontSize: 13 }}
+                  />
+                  <Bar dataKey="revenue" radius={[4, 4, 0, 0]} maxBarSize={48}>
+                    {salesTrend.map((_, i) => (
+                      <Cell key={i} fill={i === lastTrendIndex ? '#cc0000' : '#d1d2d6'} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
             ) : (
-              <p className="text-xs text-slate-400 text-center py-6">No recent audit logs.</p>
+              <div className="h-full flex items-center justify-center text-sm text-slate-400">No sales yet.</div>
             )}
           </div>
-        </div>
+        </Card>
+
+        {/* Top models */}
+        <Card title="Best-selling models">
+          {modelWiseSales.length > 0 ? (
+            <ul className="px-5 py-3 space-y-3">
+              {modelWiseSales.map((m) => {
+                const max = modelWiseSales[0]?.unitsSold || 1;
+                return (
+                  <li key={m._id} className="text-sm">
+                    <div className="flex justify-between mb-1">
+                      <span className="text-slate-800">{m.modelName}</span>
+                      <span className="text-slate-600 tabular-nums">{m.unitsSold} sold</span>
+                    </div>
+                    <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-slate-400 rounded-full" style={{ width: `${(m.unitsSold / max) * 100}%` }} />
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <p className="px-5 py-10 text-sm text-slate-400 text-center">No sales yet.</p>
+          )}
+        </Card>
       </div>
     </div>
   );

@@ -1,8 +1,22 @@
 import { body } from 'express-validator';
 
 export const createSaleValidator = [
-  body('customer').isMongoId().withMessage('Valid customer ID is required'),
-  body('bikeUnit').isMongoId().withMessage('Valid bike physical unit ID is required'),
+  // The billing screen sends either an existing customerId or a newCustomer object, plus bikeUnitId
+  body('customerId')
+    .if(body('newCustomer').not().exists({ values: 'falsy' }))
+    .isMongoId()
+    .withMessage('Please select a customer or register a new one'),
+  body('newCustomer.name')
+    .if(body('customerId').not().exists({ values: 'falsy' }))
+    .trim()
+    .notEmpty()
+    .withMessage('New customer name is required'),
+  body('newCustomer.phone')
+    .if(body('customerId').not().exists({ values: 'falsy' }))
+    .trim()
+    .matches(/^[0-9+ -]{10,15}$/)
+    .withMessage('New customer phone number must be 10 to 15 digits'),
+  body('bikeUnitId').isMongoId().withMessage('Please select an available bike unit (chassis number)'),
   body('insuranceCharge')
     .optional()
     .isFloat({ min: 0 })

@@ -103,10 +103,8 @@ export const Customers = () => {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Customer Directory</h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Registered vehicle buyers, inquiries, and customer transaction records
-          </p>
+          <h1 className="text-2xl font-semibold text-slate-900">Customers</h1>
+          <p className="text-sm text-slate-500 mt-1">Contact details and purchase history of every customer.</p>
         </div>
         <button
           onClick={() => {
@@ -128,7 +126,7 @@ export const Customers = () => {
           className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-md shadow-red-600/20 transition-all self-start sm:self-auto"
         >
           <Plus className="w-4 h-4" />
-          <span>Register New Customer</span>
+          <span>Add Customer</span>
         </button>
       </div>
 
@@ -242,7 +240,7 @@ export const Customers = () => {
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={editingCustomer ? 'Update Customer Profile' : 'Register New Showroom Customer'}
+        title={editingCustomer ? 'Update Customer Profile' : 'Add Customer'}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -395,7 +393,7 @@ export const Customers = () => {
       <Modal
         isOpen={isViewModalOpen}
         onClose={() => setIsViewModalOpen(false)}
-        title={`Customer Portfolio: ${selectedCustomerData?.customer?.name || ''}`}
+        title={`Customer: ${selectedCustomerData?.customer?.name || ''}`}
         maxWidth="max-w-3xl"
       >
         {selectedCustomerData && (

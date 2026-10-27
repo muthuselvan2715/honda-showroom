@@ -77,17 +77,15 @@ export const Reports = () => {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Dealership Reports & Export</h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Database-backed accounting reports, inventory valuations, and CSV exports
-          </p>
+          <h1 className="text-2xl font-semibold text-slate-900">Reports</h1>
+          <p className="text-sm text-slate-500 mt-1">Sales, stock and pending dues. Download any report as CSV.</p>
         </div>
         <button
           onClick={handleExportCSV}
-          className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-md shadow-emerald-600/20 transition-all self-start sm:self-auto"
+          className="flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 px-4 py-2.5 rounded-xl text-sm font-medium transition-all self-start sm:self-auto"
         >
           <FileSpreadsheet className="w-4 h-4" />
-          <span>Export Current Report to CSV</span>
+          <span>Download CSV</span>
         </button>
       </div>
 
@@ -102,7 +100,7 @@ export const Reports = () => {
           }`}
         >
           <Receipt className="w-4 h-4" />
-          <span>Sales & Revenue Ledger</span>
+          <span>Sales</span>
         </button>
         <button
           onClick={() => setActiveReport('inventory')}
@@ -113,7 +111,7 @@ export const Reports = () => {
           }`}
         >
           <Layers className="w-4 h-4" />
-          <span>Physical Inventory Status</span>
+          <span>Stock</span>
         </button>
         <button
           onClick={() => setActiveReport('outstanding')}
@@ -124,7 +122,7 @@ export const Reports = () => {
           }`}
         >
           <Wallet className="w-4 h-4" />
-          <span>Outstanding Customer Receivables</span>
+          <span>Pending Dues</span>
         </button>
       </div>
 
@@ -132,7 +130,7 @@ export const Reports = () => {
       {activeReport === 'sales' && (
         <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-wrap items-center gap-3">
           <Calendar className="w-4 h-4 text-slate-400" />
-          <span className="text-xs font-semibold text-slate-700">Date Range Filter:</span>
+          <span className="text-xs font-semibold text-slate-700">Dates:</span>
           <div className="flex items-center gap-2">
             <input
               type="date"

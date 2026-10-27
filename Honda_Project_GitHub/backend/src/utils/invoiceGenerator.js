@@ -1,7 +1,9 @@
 import { ShowroomSettings } from '../models/ShowroomSettings.js';
 
 /**
- * Generate a sequential, unique invoice number based on showroom settings
+ * Generate a sequential, unique invoice number based on showroom settings.
+ * The counter is incremented atomically ($inc), so two sales saved at the
+ * same moment can never receive the same invoice number.
  * @returns {Promise<string>}
  */
 export async function getNextInvoiceNumber() {
@@ -11,15 +13,19 @@ export async function getNextInvoiceNumber() {
       invoicePrefix: 'HND-2026',
       nextInvoiceNumber: 1001,
     });
+  } else if (!settings.nextInvoiceNumber) {
+    settings.nextInvoiceNumber = 1001;
+    await settings.save();
   }
 
-  const currentNumber = settings.nextInvoiceNumber || 1001;
-  const prefix = settings.invoicePrefix || 'HND-2026';
-  const invoiceNumber = `${prefix}-${String(currentNumber).padStart(4, '0')}`;
+  // Atomically reserve the current number and move the counter forward by one
+  const before = await ShowroomSettings.findOneAndUpdate(
+    { _id: settings._id },
+    { $inc: { nextInvoiceNumber: 1 } },
+    { new: false }
+  );
 
-  // Increment nextInvoiceNumber
-  settings.nextInvoiceNumber = currentNumber + 1;
-  await settings.save();
-
-  return invoiceNumber;
+  const currentNumber = before?.nextInvoiceNumber || 1001;
+  const prefix = before?.invoicePrefix || settings.invoicePrefix || 'HND-2026';
+  return `${prefix}-${String(currentNumber).padStart(4, '0')}`;
 }

@@ -7,13 +7,31 @@ export const InvoicePrintModal = ({ isOpen, onClose, saleData }) => {
 
   const { sale, payments = [], amountInWords, showroom } = saleData;
 
+  const accessoriesList = Array.isArray(sale.accessoriesList) ? sale.accessoriesList : [];
+  const listedAccessoriesTotal = accessoriesList.reduce((sum, acc) => sum + (Number(acc.price) || 0), 0);
+  // Older invoices may carry an accessories total without the item list – show the difference so the bill adds up
+  const unlistedAccessories = Math.round(((Number(sale.accessoriesTotal) || 0) - listedAccessoriesTotal) * 100) / 100;
+  const isCancelled = sale.saleStatus === 'cancelled';
+  const halfGstRate = (sale.gstRate || 28) / 2;
+
+  const joinParts = (parts, sep = ', ') => parts.filter((p) => p !== undefined && p !== null && String(p).trim() !== '').join(sep);
+  const showroomAddress = joinParts([showroom?.address, showroom?.city, showroom?.state]) + (showroom?.pincode ? ` - ${showroom.pincode}` : '');
+  const showroomContact = joinParts([showroom?.phone && `Phone: ${showroom.phone}`, showroom?.email && `Email: ${showroom.email}`], ' | ');
+  const showroomTax = joinParts([showroom?.gstin && `GSTIN: ${showroom.gstin}`, showroom?.dealerCode && `Dealer Code: ${showroom.dealerCode}`], ' | ');
+  const customerCityLine = joinParts([sale.customer?.city, sale.customer?.state]) + (sale.customer?.pincode ? ` - ${sale.customer.pincode}` : '');
+
   const handlePrint = () => {
+    const previousTitle = document.title;
+    document.title = `Invoice ${sale.invoiceNumber}`; // becomes the default PDF file name
     window.print();
+    document.title = previousTitle;
   };
 
+  let lineNo = 1;
+
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4">
-      <div className="bg-white w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden border border-slate-200">
+    <div className="invoice-print-root fixed inset-0 z-50 overflow-y-auto bg-slate-900/70 backdrop-blur-sm flex items-start sm:items-center justify-center p-2 sm:p-4">
+      <div className="invoice-print-sheet bg-white w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden border border-slate-200 my-auto">
         {/* Modal Toolbar (hidden when printing) */}
         <div className="no-print flex items-center justify-between px-6 py-4 bg-slate-900 text-white">
           <div className="flex items-center gap-3">
@@ -40,7 +58,12 @@ export const InvoicePrintModal = ({ isOpen, onClose, saleData }) => {
         </div>
 
         {/* Printable Tax Invoice Sheet */}
-        <div className="p-8 sm:p-10 text-slate-800 bg-white invoice-container text-xs sm:text-sm font-sans">
+        <div className="relative p-8 sm:p-10 text-slate-800 bg-white invoice-container text-xs sm:text-sm font-sans">
+          {isCancelled && (
+            <div className="mb-5 border-2 border-red-600 bg-red-50 text-red-700 rounded-xl px-4 py-2 text-center font-black uppercase tracking-widest">
+              Cancelled Invoice{sale.cancellationReason ? ` — ${sale.cancellationReason}` : ''}
+            </div>
+          )}
           {/* Header */}
           <div className="border-b-2 border-red-600 pb-5 mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
@@ -55,15 +78,11 @@ export const InvoicePrintModal = ({ isOpen, onClose, saleData }) => {
               <p className="text-xs text-red-700 font-semibold mt-1">
                 {showroom?.tagline || 'Authorized Honda 2-Wheelers Sales & Service'}
               </p>
-              <p className="text-xs text-slate-600 mt-1">
-                {showroom?.address}, {showroom?.city}, {showroom?.state} - {showroom?.pincode}
-              </p>
-              <p className="text-xs text-slate-600">
-                Phone: {showroom?.phone} | Email: {showroom?.email}
-              </p>
-              <p className="text-xs font-mono font-semibold text-slate-800 mt-0.5">
-                GSTIN: {showroom?.gstin || '29AABCH1234F1Z5'} | Dealer Code: {showroom?.dealerCode || 'HND-BLR-042'}
-              </p>
+              {showroomAddress && <p className="text-xs text-slate-600 mt-1">{showroomAddress}</p>}
+              {showroomContact && <p className="text-xs text-slate-600">{showroomContact}</p>}
+              {showroomTax && (
+                <p className="text-xs font-mono font-semibold text-slate-800 mt-0.5">{showroomTax}</p>
+              )}
             </div>
             <div className="text-right sm:border-l sm:pl-6 border-slate-200">
               <span className="inline-block uppercase tracking-wider text-xs font-bold text-red-600 bg-red-50 border border-red-200 px-3 py-1 rounded-md mb-2">
@@ -85,9 +104,7 @@ export const InvoicePrintModal = ({ isOpen, onClose, saleData }) => {
               </h3>
               <p className="font-bold text-slate-900 text-sm">{sale.customer?.name}</p>
               <p className="text-slate-600 mt-1">{sale.customer?.address}</p>
-              <p className="text-slate-600">
-                {sale.customer?.city}, {sale.customer?.state} {sale.customer?.pincode ? `- ${sale.customer.pincode}` : ''}
-              </p>
+              {customerCityLine && <p className="text-slate-600">{customerCityLine}</p>}
               <p className="text-slate-700 font-medium mt-1">Phone: {sale.customer?.phone}</p>
               {sale.customer?.email && <p className="text-slate-600 text-xs">Email: {sale.customer.email}</p>}
               {sale.customer?.idProofNumber && (
@@ -121,7 +138,10 @@ export const InvoicePrintModal = ({ isOpen, onClose, saleData }) => {
                 <div>
                   <span className="text-slate-500">Year / Capacity:</span>
                   <p className="font-medium text-slate-800">
-                    {sale.bikeModel?.modelYear} ({sale.bikeModel?.engineCapacityCc || 110}cc)
+                    {joinParts([
+                      sale.bikeModel?.modelYear,
+                      sale.bikeModel?.engineCapacityCc ? `${sale.bikeModel.engineCapacityCc} cc` : null,
+                    ], ' · ') || '—'}
                   </p>
                 </div>
               </div>
@@ -141,7 +161,7 @@ export const InvoicePrintModal = ({ isOpen, onClose, saleData }) => {
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700">
                 <tr>
-                  <td className="py-2 px-4 font-mono">1</td>
+                  <td className="py-2 px-4 font-mono">{lineNo++}</td>
                   <td className="py-2 px-4 font-medium text-slate-900">
                     Base Ex-Showroom Price (Honda {sale.bikeModel?.modelName})
                   </td>
@@ -151,14 +171,23 @@ export const InvoicePrintModal = ({ isOpen, onClose, saleData }) => {
                   </td>
                 </tr>
 
-                {sale.accessoriesList?.map((acc, idx) => (
+                {accessoriesList.map((acc, idx) => (
                   <tr key={idx} className="text-slate-600 bg-slate-50/30">
-                    <td className="py-1.5 px-4 font-mono">{idx + 2}</td>
+                    <td className="py-1.5 px-4 font-mono">{lineNo++}</td>
                     <td className="py-1.5 px-4">Accessory: {acc.name}</td>
                     <td className="py-1.5 px-4 text-center font-mono">8714</td>
                     <td className="py-1.5 px-4 text-right font-mono">{formatINRDecimal(acc.price)}</td>
                   </tr>
                 ))}
+
+                {unlistedAccessories > 0.005 && (
+                  <tr className="text-slate-600 bg-slate-50/30">
+                    <td className="py-1.5 px-4 font-mono">{lineNo++}</td>
+                    <td className="py-1.5 px-4">Accessories &amp; Add-ons</td>
+                    <td className="py-1.5 px-4 text-center font-mono">8714</td>
+                    <td className="py-1.5 px-4 text-right font-mono">{formatINRDecimal(unlistedAccessories)}</td>
+                  </tr>
+                )}
 
                 {sale.discountAmount > 0 && (
                   <tr className="text-emerald-700 bg-emerald-50/40">
@@ -182,13 +211,13 @@ export const InvoicePrintModal = ({ isOpen, onClose, saleData }) => {
 
                 <tr>
                   <td colSpan="3" className="py-2 px-4 text-right text-slate-600">
-                    Central GST (CGST @ {(sale.gstRate || 28) / 2}%)
+                    Central GST (CGST @ {halfGstRate}%)
                   </td>
                   <td className="py-2 px-4 text-right font-mono">{formatINRDecimal(sale.cgstAmount)}</td>
                 </tr>
                 <tr>
                   <td colSpan="3" className="py-2 px-4 text-right text-slate-600">
-                    State GST (SGST @ {(sale.gstRate || 28) / 2}%)
+                    State GST (SGST @ {halfGstRate}%)
                   </td>
                   <td className="py-2 px-4 text-right font-mono">{formatINRDecimal(sale.sgstAmount)}</td>
                 </tr>
@@ -258,14 +287,14 @@ export const InvoicePrintModal = ({ isOpen, onClose, saleData }) => {
           </div>
 
           {/* Terms and Signatures */}
-          <div className="grid grid-cols-2 gap-8 pt-8 border-t border-slate-200 mt-6 text-xs text-slate-500">
+          <div className="invoice-terms grid grid-cols-2 gap-8 pt-8 border-t border-slate-200 mt-6 text-xs text-slate-500">
             <div>
               <p className="font-semibold text-slate-700 mb-1">Terms & Conditions:</p>
               <ol className="list-decimal pl-4 space-y-0.5">
                 <li>Goods once sold will not be taken back or exchanged.</li>
                 <li>Registration of the vehicle is subject to RTO approval and document clearance.</li>
                 <li>Manufacturer warranty as per Honda Motorcycle and Scooter India Pvt. Ltd. policy.</li>
-                <li>Subject to jurisdiction of Bengaluru courts only.</li>
+                <li>Subject to jurisdiction of {showroom?.city || 'local'} courts only.</li>
               </ol>
             </div>
             <div className="flex flex-col justify-end items-end text-right">

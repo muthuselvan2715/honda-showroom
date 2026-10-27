@@ -102,10 +102,8 @@ export const TestRides = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Test Ride Management</h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Customer trial ride schedule, driving license verification, and route logs
-          </p>
+          <h1 className="text-2xl font-semibold text-slate-900">Test Rides</h1>
+          <p className="text-sm text-slate-500 mt-1">Test ride bookings and their status.</p>
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
@@ -220,7 +218,7 @@ export const TestRides = () => {
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title="Schedule Motorcycle Test Ride"
+        title="Book Test Ride"
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -332,7 +330,7 @@ export const TestRides = () => {
               type="submit"
               className="px-5 py-2 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 rounded-xl shadow"
             >
-              Schedule Test Ride
+              Book Ride
             </button>
           </div>
         </form>

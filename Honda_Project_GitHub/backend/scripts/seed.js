@@ -535,6 +535,10 @@ async function seedDatabase() {
           soldBy: staffUser._id,
           saleDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
           ...breakdown1,
+          accessoriesList: [
+            { name: 'All-Round Chrome Guard', price: 2400 },
+            { name: 'Seat Cover & Floor Mat', price: 950 },
+          ],
           amountPaid: breakdown1.totalAmount, // Fully settled
           outstandingBalance: 0,
           paymentStatus: 'paid',
@@ -585,6 +589,10 @@ async function seedDatabase() {
           soldBy: adminUser._id,
           saleDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
           ...breakdown2,
+          accessoriesList: [
+            { name: 'Engine Crash Guard with Sliders', price: 4200 },
+            { name: 'Pillion Backrest', price: 2800 },
+          ],
           amountPaid: advanceAmount,
           outstandingBalance: balance,
           paymentStatus: 'partial',

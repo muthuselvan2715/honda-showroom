@@ -225,6 +225,13 @@ export const createSale = async (req, res, next) => {
       soldBy: req.user._id,
       saleDate: new Date(),
       ...financialBreakdown,
+      // Save the individual accessory lines so they can be printed on the invoice
+      accessoriesList: (Array.isArray(accessoriesList) ? accessoriesList : [])
+        .filter((item) => item && String(item.name || '').trim() !== '')
+        .map((item) => ({
+          name: String(item.name).trim(),
+          price: Math.max(0, roundToTwo(item.price || 0)),
+        })),
       amountPaid: advance,
       outstandingBalance,
       paymentStatus,

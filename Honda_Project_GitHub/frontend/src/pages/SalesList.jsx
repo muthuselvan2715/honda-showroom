@@ -107,17 +107,15 @@ export const SalesList = () => {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Sales & Tax Invoices</h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Customer billings, GST breakdown, outstanding balances, and printable receipts
-          </p>
+          <h1 className="text-2xl font-semibold text-slate-900">Invoices</h1>
+          <p className="text-sm text-slate-500 mt-1">All sales – print an invoice, check the balance, or cancel a sale.</p>
         </div>
         <Link
           to="/sales/new"
           className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-md shadow-red-600/20 transition-all self-start sm:self-auto"
         >
           <Plus className="w-4 h-4" />
-          <span>New Sale Invoice</span>
+          <span>New Sale</span>
         </Link>
       </div>
 
