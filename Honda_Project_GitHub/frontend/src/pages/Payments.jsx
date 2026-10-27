@@ -14,6 +14,7 @@ import api from '../services/api';
 import { useNotification } from '../context/NotificationContext';
 import { Modal } from '../components/Modal';
 import { Badge } from '../components/Badge';
+import { PaymentReceiptModal } from '../components/PaymentReceiptModal';
 import { formatINR, formatINRDecimal, formatDate, formatDateTime } from '../utils/formatters';
 
 export const Payments = () => {
@@ -38,6 +39,17 @@ export const Payments = () => {
 
   const { showSuccess, showError } = useNotification();
 
+  // Receipt printing
+  const [receipt, setReceipt] = useState(null);
+  const openReceipt = async (p) => {
+    try {
+      const res = await api.get(`/sales/${p.sale?._id || p.sale}`);
+      setReceipt({ payment: p, sale: res.data.sale, showroom: res.data.showroom });
+    } catch (err) {
+      showError('Could not load receipt details.');
+    }
+  };
+
   const fetchPayments = async () => {
     setIsLoading(true);
     try {
@@ -56,10 +68,10 @@ export const Payments = () => {
   const fetchOpenInvoices = async () => {
     try {
       const res = await api.get('/sales', {
-        params: { paymentStatus: 'partial', limit: 100 },
+        params: { paymentStatus: 'partial', status: 'confirmed', limit: 100 },
       });
       const pendingRes = await api.get('/sales', {
-        params: { paymentStatus: 'pending', limit: 100 },
+        params: { paymentStatus: 'pending', status: 'confirmed', limit: 100 },
       });
       const allOpen = [...(res.data.sales || []), ...(pendingRes.data.sales || [])];
       setOpenInvoices(allOpen);
@@ -179,12 +191,13 @@ export const Payments = () => {
                 <th className="py-3 px-4 text-right">Amount</th>
                 <th className="py-3 px-4">Received By</th>
                 <th className="py-3 px-4 text-center">Status</th>
+                <th className="py-3 px-4 text-right">Receipt</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-700">
               {isLoading ? (
                 <tr>
-                  <td colSpan="8" className="py-12 text-center text-slate-400">
+                  <td colSpan="9" className="py-12 text-center text-slate-400">
                     Loading payments ledger...
                   </td>
                 </tr>
@@ -201,29 +214,35 @@ export const Payments = () => {
                       <span className="font-semibold text-slate-800 block">{p.customer?.name}</span>
                       <span className="text-[11px] text-slate-400">{p.customer?.phone}</span>
                     </td>
-                    <td className="py-3 px-4 uppercase font-semibold text-slate-600">
-                      {p.paymentMethod}
+                    <td className="py-3 px-4 font-semibold text-slate-600">
+                      {{ cash: 'Cash', upi: 'UPI', card: 'Card', bank_transfer: 'Bank Transfer', cheque: 'Cheque' }[p.paymentMethod] || p.paymentMethod}
                     </td>
                     <td className="py-3 px-4 font-mono text-slate-500 truncate max-w-[150px]">
                       {p.transactionReference || 'Counter Entry'}
                     </td>
-                    <td className="py-3 px-4 text-right font-mono font-bold text-emerald-700 text-sm">
+                    <td className={`py-3 px-4 text-right font-mono font-bold text-sm ${p.status === 'refunded' ? 'text-slate-400 line-through' : 'text-emerald-700'}`}>
                       {formatINR(p.amount)}
                     </td>
                     <td className="py-3 px-4 text-slate-600">
                       {p.receivedBy?.name || 'Cashier'}
                     </td>
                     <td className="py-3 px-4 text-center">
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
-                        <CheckCircle className="w-3 h-3 text-emerald-600" />
-                        Success
-                      </span>
+                      <Badge status={p.status || 'success'}>{p.status === 'success' || !p.status ? 'Received' : p.status}</Badge>
+                    </td>
+                    <td className="py-3 px-4 text-right">
+                      <button
+                        onClick={() => openReceipt(p)}
+                        className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50"
+                      >
+                        <Receipt className="w-3.5 h-3.5" />
+                        Print
+                      </button>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="8" className="py-12 text-center text-slate-400">
+                  <td colSpan="9" className="py-12 text-center text-slate-400">
                     No payment collection transactions found.
                   </td>
                 </tr>
@@ -366,6 +385,14 @@ export const Payments = () => {
           </div>
         </form>
       </Modal>
+      {receipt && (
+        <PaymentReceiptModal
+          payment={receipt.payment}
+          sale={receipt.sale}
+          showroom={receipt.showroom}
+          onClose={() => setReceipt(null)}
+        />
+      )}
     </div>
   );
 };

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   Receipt,
   Plus,
@@ -31,6 +31,8 @@ export const SalesList = () => {
 
   // Filters
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
   const [paymentStatus, setPaymentStatus] = useState('');
   const [saleStatus, setSaleStatus] = useState('');
 
@@ -53,7 +55,7 @@ export const SalesList = () => {
         params: {
           page,
           limit: 12,
-          search,
+          search: debouncedSearch,
           paymentStatus,
           status: saleStatus,
         },
@@ -68,9 +70,24 @@ export const SalesList = () => {
     }
   };
 
+  // Wait until the user stops typing before searching
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search.trim()), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
   useEffect(() => {
     fetchSales();
-  }, [page, search, paymentStatus, saleStatus]);
+  }, [page, debouncedSearch, paymentStatus, saleStatus]);
+
+  // Right after a new sale, open its invoice straight away
+  useEffect(() => {
+    const openId = searchParams.get('open');
+    if (openId) {
+      handleOpenInvoice(openId);
+      setSearchParams({}, { replace: true });
+    }
+  }, []);
 
   // Open Printable Invoice
   const handleOpenInvoice = async (saleId) => {
@@ -125,7 +142,7 @@ export const SalesList = () => {
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search invoice number (e.g. HND-2026)..."
+            placeholder="Search invoice no., customer name, phone or chassis..."
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
@@ -212,19 +229,14 @@ export const SalesList = () => {
                       {formatINR(sale.totalAmount)}
                     </td>
                     <td className="py-3 px-4 text-right font-mono text-emerald-700 font-semibold">
-                      {formatINR(sale.amountPaid)}
+                      {sale.saleStatus === 'cancelled' ? (sale.amountPaid > 0 ? <span className="text-slate-400">Refunded</span> : '—') : formatINR(sale.amountPaid)}
                     </td>
                     <td className="py-3 px-4 text-right font-mono text-slate-800 font-semibold">
-                      {formatINR(sale.outstandingBalance)}
+                      {sale.saleStatus === 'cancelled' ? '—' : formatINR(sale.outstandingBalance)}
                     </td>
                     <td className="py-3 px-4 text-center">
                       <div className="flex flex-col gap-1 items-center">
-                        <Badge status={sale.paymentStatus} />
-                        {sale.saleStatus === 'cancelled' && (
-                          <span className="text-[10px] font-bold text-rose-600 uppercase">
-                            Cancelled
-                          </span>
-                        )}
+                        {sale.saleStatus === 'cancelled' ? <Badge status="cancelled" /> : <Badge status={sale.paymentStatus} />}
                       </div>
                     </td>
                     <td className="py-3 px-4 text-right">

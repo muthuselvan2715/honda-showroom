@@ -10,21 +10,34 @@ import { errorHandler } from './middleware/errorHandler.js';
 
 const app = express();
 
-// CORS configuration
+app.disable('x-powered-by');
+app.set('trust proxy', 1); // Render / proxies: real client IP for logs and login limits
+
+// Basic security headers (no extra package needed)
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  if (req.secure) res.setHeader('Strict-Transport-Security', 'max-age=15552000');
+  if (req.path.startsWith('/api')) res.setHeader('Cache-Control', 'no-store');
+  next();
+});
+
+// CORS: the app itself is served from the same link, so only the dev server
+// and an optional CLIENT_URL need cross-origin access
 const allowedOrigins = [
-  process.env.CLIENT_URL || 'http://localhost:5173',
-  'http://localhost:3000',
+  ...(process.env.CLIENT_URL || '').split(',').map((o) => o.trim()).filter(Boolean),
+  'http://localhost:5173',
   'http://127.0.0.1:5173',
+  'http://localhost:3000',
 ];
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // allow requests with no origin (like mobile apps, curl, postman)
-      if (!origin || allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-      return callback(null, true); // Permissive in dev/demo environment
+      if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+      return callback(null, false);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -32,8 +45,8 @@ app.use(
   })
 );
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '200kb' }));
+app.use(express.urlencoded({ extended: true, limit: '200kb' }));
 
 if (process.env.NODE_ENV !== 'test') {
   app.use(morgan('dev'));
@@ -72,7 +85,7 @@ app.use('/api', apiRoutes);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const frontendDist = path.resolve(__dirname, '../../frontend/dist');
 if (fs.existsSync(path.join(frontendDist, 'index.html'))) {
-  app.use(express.static(frontendDist));
+  app.use(express.static(frontendDist, { maxAge: '7d', index: false, setHeaders: (res, file) => { if (file.endsWith('.html')) res.setHeader('Cache-Control', 'no-cache'); } }));
   app.get(/^\/(?!api).*/, (req, res) => {
     res.sendFile(path.join(frontendDist, 'index.html'));
   });

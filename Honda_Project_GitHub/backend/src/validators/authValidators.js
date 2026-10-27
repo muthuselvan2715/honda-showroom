@@ -17,3 +17,12 @@ export const registerUserValidator = [
     .withMessage('Role must be either admin or staff'),
   body('phone').optional().trim(),
 ];
+
+export const changePasswordValidator = [
+  body('currentPassword').notEmpty().withMessage('Current password is required'),
+  body('newPassword').isLength({ min: 6 }).withMessage('New password must be at least 6 characters long'),
+];
+
+export const resetPasswordValidator = [
+  body('newPassword').isLength({ min: 6 }).withMessage('New password must be at least 6 characters long'),
+];

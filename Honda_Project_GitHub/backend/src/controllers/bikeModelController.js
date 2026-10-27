@@ -1,6 +1,7 @@
 import { BikeModel } from '../models/BikeModel.js';
 import { BikeUnit } from '../models/BikeUnit.js';
 import { logAudit } from '../services/auditService.js';
+import { escapeRegex } from '../utils/text.js';
 
 export const listBikeModels = async (req, res, next) => {
   try {
@@ -11,8 +12,8 @@ export const listBikeModels = async (req, res, next) => {
     if (activeOnly === 'true') filter.isActive = true;
     if (search) {
       filter.$or = [
-        { modelName: { $regex: search, $options: 'i' } },
-        { variant: { $regex: search, $options: 'i' } },
+        { modelName: { $regex: escapeRegex(search), $options: 'i' } },
+        { variant: { $regex: escapeRegex(search), $options: 'i' } },
       ];
     }
 
@@ -116,8 +117,8 @@ export const createBikeModel = async (req, res, next) => {
     } = req.body;
 
     const existing = await BikeModel.findOne({
-      modelName: { $regex: new RegExp(`^${modelName.trim()}$`, 'i') },
-      variant: { $regex: new RegExp(`^${variant.trim()}$`, 'i') },
+      modelName: { $regex: new RegExp(`^${escapeRegex(modelName)}$`, 'i') },
+      variant: { $regex: new RegExp(`^${escapeRegex(variant)}$`, 'i') },
       modelYear,
     });
 

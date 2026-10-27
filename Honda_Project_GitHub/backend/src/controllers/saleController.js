@@ -8,6 +8,7 @@ import { calculateSaleTotals, roundToTwo } from '../services/calculationService.
 import { getNextInvoiceNumber } from '../utils/invoiceGenerator.js';
 import { amountInWords } from '../utils/amountWords.js';
 import { logAudit } from '../services/auditService.js';
+import { escapeRegex } from '../utils/text.js';
 
 export const listSales = async (req, res, next) => {
   try {
@@ -38,8 +39,18 @@ export const listSales = async (req, res, next) => {
       }
     }
 
-    if (search) {
-      filter.invoiceNumber = { $regex: search.trim(), $options: 'i' };
+    if (search && String(search).trim()) {
+      // Search by invoice number, customer name / phone, or chassis number
+      const pattern = { $regex: escapeRegex(search), $options: 'i' };
+      const [matchingCustomers, matchingUnits] = await Promise.all([
+        Customer.find({ $or: [{ name: pattern }, { phone: pattern }] }).select('_id').limit(200),
+        BikeUnit.find({ chassisNumber: pattern }).select('_id').limit(200),
+      ]);
+      filter.$or = [
+        { invoiceNumber: pattern },
+        { customer: { $in: matchingCustomers.map((c) => c._id) } },
+        { bikeUnit: { $in: matchingUnits.map((u) => u._id) } },
+      ];
     }
 
     const pageNum = Math.max(1, parseInt(page, 10));
@@ -131,6 +142,7 @@ export const createSale = async (req, res, next) => {
       paymentMethod = 'cash',
       paymentReference = '',
       notes = '',
+      financeProvider = '',
     } = req.body;
 
     // 1. Resolve or register customer
@@ -141,6 +153,7 @@ export const createSale = async (req, res, next) => {
         return res.status(404).json({ success: false, message: 'Specified customer not found' });
       }
     } else if (newCustomer) {
+      const settings0 = await ShowroomSettings.findOne().select('city state');
       const existing = await Customer.findOne({ phone: newCustomer.phone?.trim() });
       if (existing) {
         customer = existing;
@@ -150,8 +163,8 @@ export const createSale = async (req, res, next) => {
           phone: newCustomer.phone?.trim(),
           email: newCustomer.email?.trim() || '',
           address: newCustomer.address?.trim() || 'Showroom Counter',
-          city: newCustomer.city?.trim() || 'Bengaluru',
-          state: newCustomer.state?.trim() || 'Karnataka',
+          city: newCustomer.city?.trim() || settings0?.city || '',
+          state: newCustomer.state?.trim() || settings0?.state || 'Tamil Nadu',
           pincode: newCustomer.pincode?.trim() || '',
           idProofType: newCustomer.idProofType || 'Aadhaar',
           idProofNumber: newCustomer.idProofNumber || '',
@@ -236,6 +249,7 @@ export const createSale = async (req, res, next) => {
       outstandingBalance,
       paymentStatus,
       saleStatus: 'confirmed',
+      financeProvider: String(financeProvider || '').trim().slice(0, 120),
       notes,
     });
 
@@ -313,12 +327,17 @@ export const cancelSale = async (req, res, next) => {
     sale.cancellationReason = reason || 'Cancelled by manager';
     await sale.save();
 
+    // Money received on a cancelled invoice is returned to the customer:
+    // mark those payments as refunded so they are no longer counted as collected
+    const refund = await Payment.updateMany({ sale: sale._id, status: 'success' }, { $set: { status: 'refunded' } });
+    const refundedCount = refund.modifiedCount ?? refund.nModified ?? 0;
+
     await logAudit({
       action: 'CANCEL_SALE',
       entity: 'Sale',
       entityId: sale._id,
       user: req.user,
-      details: `Cancelled Invoice ${sale.invoiceNumber}. Reason: ${sale.cancellationReason}. Bike unit ${sale.bikeUnit?.chassisNumber || ''} restored to available.`,
+      details: `Cancelled Invoice ${sale.invoiceNumber}. Reason: ${sale.cancellationReason}. Bike unit ${sale.bikeUnit?.chassisNumber || ''} restored to available.${refundedCount ? ` ${refundedCount} payment(s) of ₹${sale.amountPaid} marked as refunded.` : ''}`,
       ipAddress: req.ip,
     });
 

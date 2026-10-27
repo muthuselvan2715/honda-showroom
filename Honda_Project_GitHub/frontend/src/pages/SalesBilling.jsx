@@ -60,6 +60,7 @@ export const SalesBilling = () => {
   const [paymentMethod, setPaymentMethod] = useState('upi');
   const [paymentReference, setPaymentReference] = useState('');
   const [notes, setNotes] = useState('');
+  const [financeProvider, setFinanceProvider] = useState('');
 
   // Load Reference Data
   useEffect(() => {
@@ -172,12 +173,13 @@ export const SalesBilling = () => {
         advancePayment: effectiveAdvance,
         paymentMethod,
         paymentReference,
+        financeProvider,
         notes,
       };
 
       const res = await api.post('/sales', payload);
       showSuccess(`Invoice ${res.data.sale.invoiceNumber} created successfully! Bike unit marked as SOLD.`);
-      navigate(`/sales`);
+      navigate(`/sales?open=${res.data.sale._id}`);
     } catch (err) {
       showError(err.response?.data?.message || 'Failed to complete sale transaction');
     } finally {
@@ -551,6 +553,29 @@ export const SalesBilling = () => {
                     onChange={(e) => setPaymentReference(e.target.value)}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono focus:bg-white focus:outline-none focus:border-red-600"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">
+                    Bike loan from (if financed)
+                  </label>
+                  <input
+                    type="text"
+                    list="finance-providers"
+                    placeholder="Leave empty for cash purchase"
+                    value={financeProvider}
+                    onChange={(e) => setFinanceProvider(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-red-600"
+                  />
+                  <datalist id="finance-providers">
+                    <option value="Honda Finance (HFCI)" />
+                    <option value="Shriram Finance" />
+                    <option value="IDFC First Bank" />
+                    <option value="Indian Bank" />
+                    <option value="Bajaj Finance" />
+                    <option value="HDFC Bank" />
+                  </datalist>
+                  <p className="text-[11px] text-slate-400 mt-1">Printed on the invoice as hypothecation for RTO.</p>
                 </div>
               </div>
 

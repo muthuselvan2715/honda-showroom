@@ -2,6 +2,7 @@ import { BikeUnit } from '../models/BikeUnit.js';
 import { BikeModel } from '../models/BikeModel.js';
 import { Sale } from '../models/Sale.js';
 import { logAudit } from '../services/auditService.js';
+import { escapeRegex } from '../utils/text.js';
 
 export const listBikeUnits = async (req, res, next) => {
   try {
@@ -10,11 +11,11 @@ export const listBikeUnits = async (req, res, next) => {
 
     if (model) filter.model = model;
     if (status) filter.status = status;
-    if (colour) filter.colour = { $regex: colour, $options: 'i' };
+    if (colour) filter.colour = { $regex: escapeRegex(colour), $options: 'i' };
     if (search) {
       filter.$or = [
-        { chassisNumber: { $regex: search.trim(), $options: 'i' } },
-        { engineNumber: { $regex: search.trim(), $options: 'i' } },
+        { chassisNumber: { $regex: escapeRegex(search), $options: 'i' } },
+        { engineNumber: { $regex: escapeRegex(search), $options: 'i' } },
       ];
     }
 

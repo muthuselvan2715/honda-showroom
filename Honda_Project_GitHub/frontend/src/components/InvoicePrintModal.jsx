@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { Printer, X } from 'lucide-react';
 import { formatINR, formatINRDecimal, formatDate } from '../utils/formatters';
 
@@ -29,7 +30,7 @@ export const InvoicePrintModal = ({ isOpen, onClose, saleData }) => {
 
   let lineNo = 1;
 
-  return (
+  return createPortal(
     <div className="invoice-print-root fixed inset-0 z-50 overflow-y-auto bg-slate-900/70 backdrop-blur-sm flex items-start sm:items-center justify-center p-2 sm:p-4">
       <div className="invoice-print-sheet bg-white w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden border border-slate-200 my-auto">
         {/* Modal Toolbar (hidden when printing) */}
@@ -62,6 +63,11 @@ export const InvoicePrintModal = ({ isOpen, onClose, saleData }) => {
           {isCancelled && (
             <div className="mb-5 border-2 border-red-600 bg-red-50 text-red-700 rounded-xl px-4 py-2 text-center font-black uppercase tracking-widest">
               Cancelled Invoice{sale.cancellationReason ? ` — ${sale.cancellationReason}` : ''}
+              {sale.amountPaid > 0 && (
+                <span className="block text-xs font-semibold normal-case tracking-normal mt-0.5">
+                  {formatINRDecimal(sale.amountPaid)} received on this invoice has been refunded to the customer.
+                </span>
+              )}
             </div>
           )}
           {/* Header */}
@@ -144,6 +150,12 @@ export const InvoicePrintModal = ({ isOpen, onClose, saleData }) => {
                     ], ' · ') || '—'}
                   </p>
                 </div>
+                {sale.financeProvider && (
+                  <div className="col-span-2">
+                    <span className="text-slate-500">Hypothecated to:</span>
+                    <p className="font-semibold text-slate-900">{sale.financeProvider}</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -305,6 +317,7 @@ export const InvoicePrintModal = ({ isOpen, onClose, saleData }) => {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

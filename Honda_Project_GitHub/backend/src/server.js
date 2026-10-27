@@ -1,5 +1,7 @@
 import dotenv from 'dotenv';
 dotenv.config();
+// Indian Standard Time for day / month boundaries in reports and invoices
+process.env.TZ = process.env.TZ || 'Asia/Kolkata';
 
 import app from './app.js';
 import { connectDB } from './config/db.js';

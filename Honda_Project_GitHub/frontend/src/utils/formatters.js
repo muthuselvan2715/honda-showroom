@@ -63,6 +63,10 @@ export const getStatusBadgeColor = (status) => {
       return 'bg-blue-50 text-blue-700 border-blue-200';
     case 'cancelled':
       return 'bg-rose-50 text-rose-700 border-rose-200';
+    case 'refunded':
+      return 'bg-violet-50 text-violet-700 border-violet-200';
+    case 'success':
+      return 'bg-emerald-50 text-emerald-700 border-emerald-200';
     case 'scheduled':
       return 'bg-sky-50 text-sky-700 border-sky-200';
     case 'completed':

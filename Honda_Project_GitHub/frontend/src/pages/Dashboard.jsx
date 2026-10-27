@@ -164,7 +164,7 @@ export const Dashboard = () => {
                       </td>
                       <td className="py-3 px-5 text-right tabular-nums">{formatINR(inv.totalAmount)}</td>
                       <td className="py-3 px-5 text-right tabular-nums text-slate-600">
-                        {formatINR(inv.outstandingBalance)}
+                        {inv.saleStatus === 'cancelled' ? '—' : formatINR(inv.outstandingBalance)}
                       </td>
                       <td className="py-3 px-5">
                         {inv.saleStatus === 'cancelled' ? <Badge status="cancelled" /> : <Badge status={inv.paymentStatus} />}

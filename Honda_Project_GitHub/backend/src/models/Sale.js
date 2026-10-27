@@ -132,6 +132,12 @@ const saleSchema = new mongoose.Schema(
       trim: true,
       default: '',
     },
+    // Bank / NBFC loan on the vehicle (hypothecation) – printed on the invoice for RTO
+    financeProvider: {
+      type: String,
+      trim: true,
+      default: '',
+    },
     notes: {
       type: String,
       trim: true,

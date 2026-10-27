@@ -1,9 +1,10 @@
 import jwt from 'jsonwebtoken';
 import { User } from '../models/User.js';
 import { logAudit } from '../services/auditService.js';
+import { getJwtSecret } from '../config/secrets.js';
 
 const generateToken = (user) => {
-  const secret = process.env.JWT_SECRET || 'super_secret_jwt_key_dealership_2026_change_in_production';
+  const secret = getJwtSecret();
   const expiresIn = process.env.JWT_EXPIRES_IN || '24h';
   return jwt.sign(
     {
@@ -176,6 +177,59 @@ export const toggleUserStatus = async (req, res, next) => {
       message: `User ${user.isActive ? 'activated' : 'deactivated'} successfully`,
       user,
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Any logged-in user changes their own password
+export const changePassword = async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    const ok = await user.comparePassword(currentPassword);
+    if (!ok) return res.status(400).json({ success: false, message: 'Current password is wrong.' });
+    if (currentPassword === newPassword) {
+      return res.status(400).json({ success: false, message: 'New password must be different from the current one.' });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    await logAudit({
+      action: 'PASSWORD_CHANGED',
+      entity: 'User',
+      entityId: user._id,
+      user: req.user,
+      details: `${user.email} changed their password`,
+      ipAddress: req.ip,
+    });
+    return res.status(200).json({ success: true, message: 'Password changed successfully.' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Admin sets a new password for a staff member who forgot theirs
+export const resetUserPassword = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    user.password = req.body.newPassword;
+    await user.save();
+
+    await logAudit({
+      action: 'PASSWORD_RESET',
+      entity: 'User',
+      entityId: user._id,
+      user: req.user,
+      details: `Admin reset the password of ${user.email}`,
+      ipAddress: req.ip,
+    });
+    return res.status(200).json({ success: true, message: `Password reset for ${user.name}.` });
   } catch (error) {
     next(error);
   }

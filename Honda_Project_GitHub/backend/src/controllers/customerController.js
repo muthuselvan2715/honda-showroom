@@ -3,6 +3,7 @@ import { Sale } from '../models/Sale.js';
 import { Enquiry } from '../models/Enquiry.js';
 import { TestRide } from '../models/TestRide.js';
 import { logAudit } from '../services/auditService.js';
+import { escapeRegex } from '../utils/text.js';
 
 export const listCustomers = async (req, res, next) => {
   try {
@@ -11,10 +12,10 @@ export const listCustomers = async (req, res, next) => {
 
     if (search) {
       filter.$or = [
-        { name: { $regex: search.trim(), $options: 'i' } },
-        { phone: { $regex: search.trim(), $options: 'i' } },
-        { email: { $regex: search.trim(), $options: 'i' } },
-        { city: { $regex: search.trim(), $options: 'i' } },
+        { name: { $regex: escapeRegex(search), $options: 'i' } },
+        { phone: { $regex: escapeRegex(search), $options: 'i' } },
+        { email: { $regex: escapeRegex(search), $options: 'i' } },
+        { city: { $regex: escapeRegex(search), $options: 'i' } },
       ];
     }
 

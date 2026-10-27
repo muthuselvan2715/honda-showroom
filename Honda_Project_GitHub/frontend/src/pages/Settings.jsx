@@ -9,6 +9,8 @@ import {
   Lock,
   UserCheck,
   UserX,
+  KeyRound,
+  Trash2,
 } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -47,6 +49,40 @@ export const Settings = () => {
     role: 'staff',
     phone: '',
   });
+
+  const [resetTarget, setResetTarget] = useState(null);
+  const [resetPassword, setResetPassword] = useState('');
+  const [isClearOpen, setIsClearOpen] = useState(false);
+  const [clearForm, setClearForm] = useState({ confirmText: '', password: '', keepModels: true });
+  const [isClearing, setIsClearing] = useState(false);
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await api.put(`/auth/users/${resetTarget._id}/reset-password`, { newPassword: resetPassword });
+      showSuccess(res.data.message);
+      setResetTarget(null);
+      setResetPassword('');
+    } catch (err) {
+      showError(err.response?.data?.errors?.[0]?.message || err.response?.data?.message || 'Failed to reset password');
+    }
+  };
+
+  const handleClearData = async (e) => {
+    e.preventDefault();
+    setIsClearing(true);
+    try {
+      const res = await api.post('/settings/clear-data', clearForm);
+      showSuccess(res.data.message);
+      setIsClearOpen(false);
+      setClearForm({ confirmText: '', password: '', keepModels: true });
+      fetchSettings();
+    } catch (err) {
+      showError(err.response?.data?.message || 'Failed to clear data');
+    } finally {
+      setIsClearing(false);
+    }
+  };
 
   const fetchSettings = async () => {
     try {
@@ -312,6 +348,17 @@ export const Settings = () => {
                     </span>
                   </td>
                   <td className="py-3 px-3 text-right">
+                    <button
+                      onClick={() => {
+                        setResetTarget(u);
+                        setResetPassword('');
+                      }}
+                      title="Set a new password"
+                      className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 mr-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50"
+                    >
+                      <KeyRound className="w-3.5 h-3.5" />
+                      Reset Password
+                    </button>
                     {u._id !== user?.id && (
                       <button
                         onClick={() => handleToggleUserStatus(u._id)}
@@ -331,6 +378,104 @@ export const Settings = () => {
           </table>
         </div>
       </div>
+
+      {/* Go-live: clear demo data */}
+      <div className="bg-white p-6 rounded-2xl border border-rose-200 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-base font-bold text-slate-900">Start fresh (clear demo data)</h2>
+            <p className="text-sm text-slate-500 mt-1">
+              Before real billing starts, remove all sample customers, bills, payments, enquiries and stock.
+              Staff logins and showroom details are kept. Invoice numbers restart from 1001.
+            </p>
+          </div>
+          <button
+            onClick={() => setIsClearOpen(true)}
+            className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-rose-300 text-rose-700 text-sm font-semibold hover:bg-rose-50"
+          >
+            <Trash2 className="w-4 h-4" />
+            Clear Demo Data
+          </button>
+        </div>
+      </div>
+
+      {/* RESET PASSWORD MODAL */}
+      <Modal isOpen={!!resetTarget} onClose={() => setResetTarget(null)} title={`Reset Password - ${resetTarget?.name || ''}`} maxWidth="max-w-md">
+        <form onSubmit={handleResetPassword} className="space-y-4">
+          <p className="text-sm text-slate-600">
+            Set a new password for <b>{resetTarget?.email}</b> and tell it to them. They can change it later from the key icon at the top.
+          </p>
+          <input
+            type="text"
+            required
+            minLength={6}
+            placeholder="New password (min 6 characters)"
+            value={resetPassword}
+            onChange={(e) => setResetPassword(e.target.value)}
+            className="w-full px-3 py-2 border rounded-lg text-sm"
+          />
+          <div className="flex justify-end gap-2">
+            <button type="button" onClick={() => setResetTarget(null)} className="px-4 py-2 text-sm rounded-lg border border-slate-200 hover:bg-slate-50">
+              Cancel
+            </button>
+            <button type="submit" className="px-4 py-2 text-sm rounded-lg bg-red-600 text-white font-medium hover:bg-red-700">
+              Save New Password
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* CLEAR DATA MODAL */}
+      <Modal isOpen={isClearOpen} onClose={() => setIsClearOpen(false)} title="Clear Demo Data" maxWidth="max-w-md">
+        <form onSubmit={handleClearData} className="space-y-4">
+          <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-sm text-rose-800">
+            This permanently deletes every customer, bill, payment, enquiry, test ride and bike in stock. It cannot be undone.
+          </div>
+          <label className="flex items-center gap-2 text-sm text-slate-700">
+            <input
+              type="checkbox"
+              checked={clearForm.keepModels}
+              onChange={(e) => setClearForm({ ...clearForm, keepModels: e.target.checked })}
+            />
+            Keep the bike models and price list
+          </label>
+          <label className="block">
+            <span className="block text-sm font-medium text-slate-700 mb-1">
+              Type <b>DELETE ALL DATA</b> to confirm
+            </span>
+            <input
+              type="text"
+              required
+              value={clearForm.confirmText}
+              onChange={(e) => setClearForm({ ...clearForm, confirmText: e.target.value })}
+              className="w-full px-3 py-2 border rounded-lg text-sm"
+            />
+          </label>
+          <label className="block">
+            <span className="block text-sm font-medium text-slate-700 mb-1">Your password</span>
+            <input
+              type="password"
+              required
+              autoComplete="current-password"
+              value={clearForm.password}
+              onChange={(e) => setClearForm({ ...clearForm, password: e.target.value })}
+              className="w-full px-3 py-2 border rounded-lg text-sm"
+            />
+          </label>
+          <div className="flex justify-end gap-2">
+            <button type="button" onClick={() => setIsClearOpen(false)} className="px-4 py-2 text-sm rounded-lg border border-slate-200 hover:bg-slate-50">
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isClearing || clearForm.confirmText !== 'DELETE ALL DATA'}
+              className="px-4 py-2 text-sm rounded-lg bg-rose-600 text-white font-medium hover:bg-rose-700 disabled:opacity-50"
+            >
+              {isClearing ? 'Clearing...' : 'Delete Everything'}
+            </button>
+          </div>
+        </form>
+      </Modal>
 
       {/* CREATE STAFF MODAL */}
       <Modal
@@ -374,7 +519,7 @@ export const Settings = () => {
               <input
                 type="password"
                 required
-                minlength="6"
+                minLength={6}
                 placeholder="Minimum 6 characters"
                 value={newUser.password}
                 onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
